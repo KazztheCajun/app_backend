@@ -1,0 +1,28 @@
+{
+    "name": "TrackerServer",
+    "version": "1.0.0",
+    "description": "This server will track the logins and serve as go between for the frontend and the database",
+    "main": "server.js",
+    "scripts": {
+        "start": "npm install && node server"
+    },
+    "engines": {
+        "node": "15.12.0",
+        "npm": "7.12.1"
+      },
+    "author": "me",
+    "dependencies": {
+        "bcrypt": "*",
+        "cookie-parser": "*",
+        "dotenv": "*",
+        "ejs": "*",
+        "express": "*",
+        "express-flash": "*",
+        "express-formidable": "*",
+        "express-session": "*",
+        "mongodb": "*",
+        "passport": "*",
+        "passport-local": "*",
+        "shortid": "*"
+    }
+}
