@@ -17,8 +17,8 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     console.log("[Server] Connected to Tabletop App Database successfully.");
 
     const savedUsers = mongo.db("TabletopApp").collection("Users"); // save the users collection connection for later use
-    const savedHomes = mongo.db("TabletopApp").collection("Characters"); // save the characters collection connection for later use
-    const savedHomes = mongo.db("TabletopApp").collection("Stories"); // save the stories collection connection for later use
+    const savedChars = mongo.db("TabletopApp").collection("Characters"); // save the characters collection connection for later use
+    const savedStories = mongo.db("TabletopApp").collection("Stories"); // save the stories collection connection for later use
 
     console.log("[Server] Loading saved users");
     
@@ -33,14 +33,14 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     }
     updateServer();
     
-    // Requests the home with the given ID from the server
-    // Returns all the data associated with that home
-    router.get("/home/:id", async(request, response) =>
+    // Requests the character with the given ID
+    // Returns all the data associated with that character object
+    router.get("/getChar", async(request, response) =>
     {
-        // frontend will send home ID in request parameters
-        const id = request.params.id;
+        // frontend will send ID in request body
+        const id = request.body.id;
     //    console.log(id);
-        const data = await mongo.db("TabletopApp").collection("Homes").findOne({_id: id});
+        const data = await savedChars.findOne({_id: id});
     //    console.log(data);
         if (typeof data != 'undefined')
         {
@@ -48,55 +48,101 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
         }
         else
         {
-            response.json({"success": false, "message": "No Home with that ID exists."});
+            response.json({"success": false, "message": "No character with that ID exists."});
+        }
+    });
+
+    // Requests the story with the given ID
+    // Returns all the data associated with that character object
+    router.get("/getStory", async(request, response) =>
+    {
+        // frontend will send ID in request body
+        const id = request.body.id;
+    //    console.log(id);
+        const data = await savedStories.findOne({_id: id});
+    //    console.log(data);
+        if (typeof data != 'undefined')
+        {
+            response.json(data);
+        }
+        else
+        {
+            response.json({"success": false, "message": "No story with that ID exists."});
         }
     });
     
-    // Creates a new home from the given name and stores it in the server
-    // Returns the created home for frontend use
-    router.post("/new", async(request, response) =>
+    // Creates a new character from the given info and stores it in the db
+    // Returns the created character for frontend use
+    router.post("/newChar", async(request, response) =>
     {
-        // frontend will send new home name in query
-        const {name} = request.query;
+        // frontend will send character info in body
+        const b = request.body;
         // console.log(name);
-        const home = {home: name, _id: shortid.generate(), pets: [], log: []};
-        const res = await savedHomes.insertOne(home);
-        // console.log(res);
-        const date = new Date(Date.now());
-        // console.log(`[Server] ${name} created at ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`);
-        updateServer();
-        response.json({"success": true, "message": "A home was found", "home": home});
-    });
-    
-    // gets the list of homes currently saved in the database
-    router.post("/list/homes", async(request, response) =>
-    {
-        const homes = request.body; // Get the names of the homes a user has access too
-    //    console.log(homes);
-        let homeList = await savedHomes.find({_id: {$in: homes}}).project({pets:0, log:0}).toArray(); // load those homes from the database
-    //    console.log(homeList);
-        response.json({"success": true, "message": "The list of homes the user has access to", "homes": homeList});
+        const char = {...b, _id: shortid.generate()};
+        const res = await savedChars.insertOne(char);
+        if(res.acknowledged)
+        {
+            updateServer();
+            response.json({"success": true, "message": `Character ${res.insertedId} was succesfully saved`, "data": char});
+        }
+        else
+        {
+            response.json({"success": false, "message": "Unable to create character"});
+        }
     });
 
-    // updates the current home's data in the database
-    router.post("/update/home", async(request, response) =>
+    // Creates a new story from the given info and stores it in the db
+    // Returns the created story for frontend use
+    router.post("/newStory", async(request, response) =>
     {
-        const home = request.body; // get the home data from the request body
+        // frontend will send character info in body
+        const b = request.body;
+        // console.log(name);
+        const story = {...b, _id: shortid.generate()};
+        const res = await savedStories.insertOne(story);
+        if(res.acknowledged)
+        {
+            updateServer();
+            response.json({"success": true, "message": `Story ${res.insertedId} was succesfully saved`, "data": story});
+        }
+        else
+        {
+            response.json({"success": false, "message": "Unable to create story", "data": res});
+        }
+    });
+
+    // updates either a story or a character in the database with new info
+    router.post("/update", async(request, response) =>
+    {
+        const b = request.body; // get the home data from the request body
         //console.log(home);
-        let r = await savedHomes.updateOne({_id: home._id}, {$set: {home: home.home, pets: home.pets, log: home.log}}); // update the home data in the database
-        updateServer(); // update the server to reflect any potential changes
-        response.json({"success": true, "message": "Home was updated succesfully", "update": r});
-    });
-
-    // updates the current users info in the database
-    router.post("/update/user", async(request, response) =>
-    {
-        console.log("updating:");
-        const user = request.body; // get user info from request body
-        console.log(user);
-        let r = await savedUsers.updateOne({_id: user._id}, {$set: {homes: user.homes}}); // store the info in the database
-        updateServer(); // update the server to reflect any potential changes
-        response.json({"success": true, "message": "User was updated succesfully", "update": r});
+        switch (b.type) {
+            case 'char':
+                let res = await savedChars.updateOne({_id: b._id}, {$set: {name: b.name, class: b.class, stats: b.stats, background: b.background, notes: b.notes, image: b.image}}); // update the home data in the database
+                if(res.acknowledged)
+                {
+                    updateServer(); // update the server to reflect any potential changes
+                    response.json({"success": true, "message": "character was updated succesfully", "data": res});
+                }
+                else
+                {
+                    response.json({"success": false, "message": "Unable to update character", "data": res});
+                }
+                break;
+            case 'story':
+                let res = await savedStories.updateOne({_id: b._id}, {$set: {title: b.title, objects: b.objects, notes: b.notes, image: b.image}}); // update the home data in the database
+                if(res.acknowledged)
+                {
+                    updateServer(); // update the server to reflect any potential changes
+                    response.json({"success": true, "message": "Story was updated succesfully", "data": res});
+                }
+                else
+                {
+                    response.json({"success": false, "message": "Unable to update story", "data": res});
+                }
+                break;
+        }
+        
     });
 
     router.post("/login", async(request, response, next) =>
