@@ -114,11 +114,11 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     // updates either a story or a character in the database with new info
     router.post("/update", async(request, response) =>
     {
-        const b = request.body; // get the home data from the request body
+        const b = request.body; // get the data from the request body
         //console.log(home);
-        switch (b.type) {
+        switch (b.type) { // switch based on if updating a char or a story
             case 'char':
-                let res = await savedChars.updateOne({_id: b._id}, {$set: {name: b.name, class: b.class, stats: b.stats, background: b.background, notes: b.notes, image: b.image}}); // update the home data in the database
+                let res = await savedChars.updateOne({_id: b._id}, {$set: {name: b.name, class: b.class, stats: b.stats, background: b.background, notes: b.notes, image: b.image}}); // update the data in the database
                 if(res.acknowledged)
                 {
                     updateServer(); // update the server to reflect any potential changes
@@ -130,7 +130,7 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
                 }
                 break;
             case 'story':
-                let res = await savedStories.updateOne({_id: b._id}, {$set: {title: b.title, objects: b.objects, notes: b.notes, image: b.image}}); // update the home data in the database
+                let res = await savedStories.updateOne({_id: b._id}, {$set: {title: b.title, objects: b.objects, notes: b.notes, image: b.image}}); // update the data in the database
                 if(res.acknowledged)
                 {
                     updateServer(); // update the server to reflect any potential changes
