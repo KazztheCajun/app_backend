@@ -116,7 +116,7 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
         const b = request.body; // get the data from the request body
         let res = 0;
         //console.log(home);
-        switch (b.type) { // switch based on if updating a char or a story
+        switch (b.u_type) { // switch based on if updating a char or a story
             case 'char':
                 res = await savedChars.updateOne({_id: b._id}, {$set: {name: b.name, class: b.class, stats: b.stats, background: b.background, notes: b.notes, image: b.image}}); // update the data in the database
                 if(res.acknowledged)
