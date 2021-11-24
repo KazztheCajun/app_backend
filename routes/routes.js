@@ -19,8 +19,6 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     const savedChars = mongo.db("TabletopApp").collection("Characters"); // save the characters collection connection for later use
     const savedStories = mongo.db("TabletopApp").collection("Stories"); // save the stories collection connection for later use
 
-    console.log("[Server] Loading saved users");
-    
     //Server Setup
     
     async function updateServer() // check the database for current list of tracked users
@@ -29,44 +27,45 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
         //console.log(saved);
         USERS.setUsers(saved);
         //console.log(USERS.users);
+        console.log("[Server] Loading saved users");
     }
-    updateServer();
+    //updateServer();
     
     // Requests the character with the given ID
     // Returns all the data associated with that character object
-    router.get("/getChar", async(request, response) =>
+    router.get("/getChar/:id", async(request, response) =>
     {
         // frontend will send ID in request body
-        const id = request.body.id;
-    //    console.log(id);
+        const id = request.params.id;
+        console.log(`[Server] Fetching character ${id}`);
         const data = await savedChars.findOne({_id: id});
     //    console.log(data);
         if (typeof data != 'undefined')
         {
-            response.json(data);
+            response.json({"success": true, "message": `Character ${data.name} was succesfully retrieved from database`, "data": data});
         }
         else
         {
-            response.json({"success": false, "message": "No character with that ID exists."});
+            response.json({"success": false, "message": "Unable to find a character with that ID in database."});
         }
     });
 
     // Requests the story with the given ID
     // Returns all the data associated with that character object
-    router.get("/getStory", async(request, response) =>
+    router.get("/getStory/:id", async(request, response) =>
     {
         // frontend will send ID in request body
-        const id = request.body.id;
-    //    console.log(id);
+        const id = request.params.id;
+        console.log(`[Server] Fetching story ${id}`);
         const data = await savedStories.findOne({_id: id});
     //    console.log(data);
         if (typeof data != 'undefined')
         {
-            response.json(data);
+            response.json({"success": true, "message": `Story ${data.title} was succesfully retrieved from database`, "data": data});
         }
         else
         {
-            response.json({"success": false, "message": "No story with that ID exists."});
+            response.json({"success": false, "message": "Unable to find a story with that ID in database."});
         }
     });
     
@@ -74,19 +73,19 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     // Returns the created character for frontend use
     router.post("/newChar", async(request, response) =>
     {
-        // frontend will send character info in body
-        const b = request.body;
-        // console.log(name);
-        const char = {...b, _id: shortid.generate()};
-        const res = await savedChars.insertOne(char);
+        
+        let char = request.body // frontend will send character info in body
+        char._id = shortid.generate() // add ID to object
+        console.log(`[Server] Creating new character ${char._id} - ${char.name}`)
+        const res = await savedChars.insertOne(char) // send to database
         if(res.acknowledged)
         {
-            updateServer();
-            response.json({"success": true, "message": `Character ${res.insertedId} was succesfully saved`, "data": char});
+            //updateServer();
+            response.json({"success": true, "message": `Character ${char.name} was succesfully saved`, "data": char});
         }
         else
         {
-            response.json({"success": false, "message": `Unable to create character ${b._id}`, 'data': res});
+            response.json({"success": false, "message": `Unable to create character ${char.name}`, 'data': res});
         }
     });
 
@@ -94,19 +93,20 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     // Returns the created story for frontend use
     router.post("/newStory", async(request, response) =>
     {
-        // frontend will send character info in body
-        const b = request.body;
-        // console.log(name);
-        const story = {...b, _id: shortid.generate()};
-        const res = await savedStories.insertOne(story);
+        
+        let story = request.body // frontend will send story info in body
+        story._id = shortid.generate() // add ID to object
+        console.log(`[Server] Creating new story ${story._id} - ${story.title}`)
+        const res = await savedStories.insertOne(story) // send to database
+        //console.log(res)
         if(res.acknowledged)
         {
-            updateServer();
-            response.json({"success": true, "message": `Story ${res.insertedId} was succesfully saved`, "data": story});
+            //updateServer();
+            response.json({"success": true, "message": `Story ${story.title} was succesfully saved`, "data": story});
         }
         else
         {
-            response.json({"success": false, "message": `Unable to create story ${b._id}`, "data": res});
+            response.json({"success": false, "message": `Unable to create story ${story.title}`, "data": story});
         }
     });
 

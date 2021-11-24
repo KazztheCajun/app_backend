@@ -20,7 +20,7 @@
         "express-flash": "*",
         "express-formidable": "*",
         "express-session": "*",
-        "mongodb": "*",
+        "mongodb": "^4.2.0",
         "passport": "*",
         "passport-local": "*",
         "shortid": "*"
