@@ -3,12 +3,11 @@ const router = express.Router();
 const USERS = require("../models/users");
 const shortid = require('shortid');
 const MongoClient = require('mongodb').MongoClient;
-const PASS = process.env.PASS
-const API_KEY = `mongodb+srv://server_access:${PASS}@gygax.bubui.mongodb.net/TabletopApp?retryWrites=true&w=majority`;
-const mongo = new MongoClient(API_KEY,{ useNewUrlParser: true, useUnifiedTopology: true });
+const MongoURL = process.env.API_KEY
+const mongo = new MongoClient("mongodb+srv://server_access:Q6VNkbapCDu5Gikd@gygax.bubui.mongodb.net/TabletopApp?retryWrites=true&w=majority",{ useNewUrlParser: true, useUnifiedTopology: true });
 const passport = require('../middlewares/passport-config');
 
-mongo.connect( async (err) => // all calls to the mongo database have to be made withing the connect block
+mongo.connect( async (err) => // all calls to the mongo database have to be made within the connect block
 {
     if (err)
     {
@@ -87,7 +86,7 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
         }
         else
         {
-            response.json({"success": false, "message": "Unable to create character"});
+            response.json({"success": false, "message": `Unable to create character ${b._id}`, 'data': res});
         }
     });
 
@@ -107,7 +106,7 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
         }
         else
         {
-            response.json({"success": false, "message": "Unable to create story", "data": res});
+            response.json({"success": false, "message": `Unable to create story ${b._id}`, "data": res});
         }
     });
 
@@ -115,18 +114,19 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     router.post("/update", async(request, response) =>
     {
         const b = request.body; // get the data from the request body
+        let res = 0;
         //console.log(home);
         switch (b.type) { // switch based on if updating a char or a story
             case 'char':
-                let res = await savedChars.updateOne({_id: b._id}, {$set: {name: b.name, class: b.class, stats: b.stats, background: b.background, notes: b.notes, image: b.image}}); // update the data in the database
+                res = await savedChars.updateOne({_id: b._id}, {$set: {name: b.name, class: b.class, stats: b.stats, background: b.background, notes: b.notes, image: b.image}}); // update the data in the database
                 if(res.acknowledged)
                 {
                     updateServer(); // update the server to reflect any potential changes
-                    response.json({"success": true, "message": "character was updated succesfully", "data": res});
+                    response.json({"success": true, "message": `Character ${res.insertedId} was updated succesfully`, "data": res});
                 }
                 else
                 {
-                    response.json({"success": false, "message": "Unable to update character", "data": res});
+                    response.json({"success": false, "message": `Unable to update character ${b._id}`, "data": res});
                 }
                 break;
             case 'story':
@@ -134,18 +134,18 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
                 if(res.acknowledged)
                 {
                     updateServer(); // update the server to reflect any potential changes
-                    response.json({"success": true, "message": "Story was updated succesfully", "data": res});
+                    response.json({"success": true, "message": `Story ${res.insertedId} was updated succesfully`, "data": res});
                 }
                 else
                 {
-                    response.json({"success": false, "message": "Unable to update story", "data": res});
+                    response.json({"success": false, "message": `Unable to update story ${b._id}`, "data": res});
                 }
                 break;
         }
         
     });
 
-    router.post("/login", async(request, response, next) =>
+/*    router.post("/login", async(request, response, next) =>
     {
     //  console.log("login request recieved");
     //  console.log(request.body);
@@ -164,7 +164,7 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
         let u = await USERS.add(name, pass, homes);
         savedUsers.insertOne(u);
         response.json({"success": true, "message": `${name} was sucessfully created`});
-    });
+    }); 
 
     router.get("/user/:id", async(request, response) =>
     {
@@ -173,8 +173,9 @@ mongo.connect( async (err) => // all calls to the mongo database have to be made
     //    console.log(u);
         let json = response.json({"user": u, "success": true, "message": "User was found!"});
         return json;
-    });
+    }); */
     
+    //mongo.close();
 });
 
 
