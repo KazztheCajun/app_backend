@@ -11,7 +11,7 @@ async function authUser(username, password, done)
         console.log('No user with that username');
         return done(null, false);
     }
-    if (await bcrypt.compare(password, user.password))
+    if (await bcrypt.compare(password, user.pass))
     {
         console.log(`User Authenticated: ${user.name}`);
     //    console.log(user);
@@ -26,7 +26,7 @@ async function setupPassport()
     passport.use(new localStrategy({ usernameField: 'name', passwordField: 'pass'}, authUser));
     passport.serializeUser((user, done) => 
     {
-//        console.log(`Serialize UserID: ${user._id} Username: ${user.name}`);
+//        console.log(`Serialize UserID: ${user._id}`);
         done(null, user._id)
     });
     passport.deserializeUser((id, done) => 

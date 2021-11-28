@@ -1,5 +1,5 @@
 {
-    "name": "TrackerServer",
+    "name": "TableTopAppServer",
     "version": "1.0.0",
     "description": "This server will track the logins and serve as go between for the frontend and the database",
     "main": "server.js",

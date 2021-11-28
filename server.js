@@ -5,6 +5,8 @@ const routes = require('./routes/routes');
 const session = require('express-session');
 const passport = require('./middlewares/passport-config.js');
 const cookieParser = require('cookie-parser')
+const op = {dateStyle: 'short', timeStyle: 'short' };
+const getTime = new Intl.DateTimeFormat('en-US', op).format; // function to formate date and time information easily
 
 if (process.env.NODE_ENV !== 'production')
 {
@@ -34,4 +36,4 @@ function localhostHandler(request, response, next)
 }
 
 setupServer();
-server.listen(port, () => console.log(`[Server] Listening on ${port}... `));
+server.listen(port, () => console.log(`[Server -- ${getTime(new Date())}] Listening on ${port}... `));

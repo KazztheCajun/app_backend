@@ -8,13 +8,13 @@ class Users
         this.users = [];
     }
 
-    async add(name, password, homes)
+    async add(user)
     {
-        const id = shortid.generate();
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = {_id:id, name:name, password:hashedPassword, homes:homes};
-        this.users.push(user);
-        console.log(user);
+        user._id = shortid.generate(); // create id for user
+        let temp = await bcrypt.hash(user.pass, 10); // encrypt password
+        user.pass = temp
+        //console.log(user);
+        this.users.push(user); // add to server user list
         return user;
     }
 
