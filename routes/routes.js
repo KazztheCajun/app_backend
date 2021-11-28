@@ -3,8 +3,7 @@ const router = express.Router();
 const USERS = require("../models/users");
 const shortid = require('shortid');
 const MongoClient = require('mongodb').MongoClient;
-const MongoURL = process.env.API_KEY
-const mongo = new MongoClient(API_KEY,{ useNewUrlParser: true, useUnifiedTopology: true });
+const mongo = new MongoClient(process.env.API_KEY,{ useNewUrlParser: true, useUnifiedTopology: true });
 const passport = require('../middlewares/passport-config');
 
 mongo.connect( async (err) => // all calls to the mongo database have to be made within the connect block
