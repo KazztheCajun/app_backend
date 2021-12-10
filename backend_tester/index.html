@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<head>
+    <link rel="icon" href="assets/favicon.png">
+    <title>Tabletop App Server & DB Tester</title>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="styles/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="styles/bootstrap/bootstrap-icons.css">
+
+    <!-- Animate CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+
+    <!-- Custom Scripts--> 
+    <script>
+        async function makeCharacter()
+        {
+            let charName = document.getElementById("charName").value.trim();
+            let charClass = document.getElementById("charClass").value.trim();
+            let charStr = document.getElementById("charStr").value.trim();
+            let charDex = document.getElementById("charDex").value.trim(); 
+            let charCon = document.getElementById("charCon").value.trim();
+            let charInt = document.getElementById("charInt").value.trim();
+            let charWis = document.getElementById("charWis").value.trim();
+            let charCha = document.getElementById("charCha").value.trim();
+            let charBack = document.getElementById("charBack").value.trim();
+            let charNote = document.getElementById("charNote").value.trim();
+
+            if(charName.length == 0 || charClass.length == 0 || charStr.length == 0 || charDex.length == 0 || charCon.length == 0 || charInt.length == 0 || charWis.length == 0 || charCha.length == 0 || charBack.length == 0 || charNote.length == 0)
+            {
+                alert("Please enter a non-empty string for each character data input field.");
+            }
+            else
+            {
+                backObj = charBack.split(" ");
+                noteObj = charNote.split(" ");
+
+                let char = 
+                {
+                    name: charName,
+                    class: charClass,
+                    stats: {str: charStr, con: charCon, dex: charDex, int: charInt, wis: charWis, cha: charCha},
+                    background: charBack.split(" "),
+                    notes: charNote.split(" "),
+                    image: "https://via.placeholder.com/200"
+                }
+                //console.log(char)
+                let result = await createCharacter(char);
+                alert(result.message);
+            }
+        }
+
+        async function getCharacter()
+        {
+            let charID = document.getElementById("charID").value.trim();
+            //console.log(charID)
+
+            if(charID.length != 0)
+            {
+                let result = await loadCharacter(charID)
+                alert(result.message);
+            }
+            else
+            {
+                alert("Please enter a non-empty string to search for character");
+            }
+        }
+
+        async function getStory()
+        {
+            let storyID = document.getElementById("storyID").value.trim();
+            //console.log(storyID)
+
+            if(storyID.length != 0)
+            {
+                let result = await loadStory(storyID)
+                alert(result.message);
+            }
+            else
+            {
+                alert("Please enter a non-empty string to search for story");
+            }
+        }
+
+        async function makeStory()
+        {
+            let storyTitle = document.getElementById("storyTitle").value.trim();
+            let storyObj = document.getElementById("storyObj").value.trim();
+            let storyNote = document.getElementById("storyNote").value.trim();
+
+            if(storyTitle.length == 0 || storyObj.length == 0 || storyNote.length == 0)
+            {
+                alert("Please enter a non-empty string for each story data input field.");
+            }
+            else
+            {
+                let story = 
+                {
+                    title: storyTitle,
+                    objects: storyObj.split(" "),
+                    notes: storyNote.split(" "),
+                    image: "https://via.placeholder.com/200"
+                }
+                //console.log(story)
+                let result = await createStory(story);
+                alert(result.message);
+            }
+        }
+
+        async function signup()
+        {
+            let username = document.getElementById("username").value.trim()
+            let password = document.getElementById("password").value.trim()
+
+            let chars = []
+            let stor = []
+
+            if(username.length == 0 || password.length == 0)
+            {
+                alert("Please enter a non-empty string for each user data input field");
+            }
+            else
+            {
+                let result = await createUser({name: username, pass: password, characters: chars, stories: stor})
+                alert(result.message);
+            }
+        }
+
+        async function getUser()
+        {
+            let name = document.getElementById("usernameLoad").value.trim()
+            let pass = document.getElementById("passwordLoad").value.trim()
+
+            if(name.length == 0 || pass == 0)
+            {
+                alert("Please enter a non-empty string to sign into user");
+            }
+            else
+            {
+                let result = await signIntoUser(name, pass)
+                alert(result.message);
+            }
+        }
+
+        async function editStory()
+        {
+            let storyTitle = document.getElementById("storyTitleEdit").value.trim();
+            let storyObj = document.getElementById("storyObjEdit").value.trim();
+            let storyNote = document.getElementById("storyNoteEdit").value.trim();
+            let storyID = document.getElementById("storyIDEdit").value.trim();
+
+            if(storyID.length == 0)
+            {
+                alert("Please specify a story ID to edit in DB")
+            }
+            else
+            {
+                let story = await loadStory(storyID)
+                if (story.success)
+                {
+                    if(storyTitle.length != 0) // if the title is changed
+                    {
+                        story.data.title = storyTitle
+                    }
+                    if (storyObj.length != 0) // if there are new objects
+                    {
+                        story.data.notes = storyNote.split(" ")
+                    }
+                    if (storyNote.length != 0) // if there are new notes
+                    {
+                        story.data.objects = storyObj.split(" ")
+                    }
+                    
+                    // add logic to update the image
+                    
+                    let result = await updateStory(story);
+                    alert(result.message);
+                }
+                else
+                {
+                    alert(`Error loading story ${storyID} from the database`)
+                    console.log(story);
+                }
+            }
+        }
+
+        async function editChar()
+        {
+            let charName = document.getElementById("charNameEdit").value.trim();
+            let charClass = document.getElementById("charClassEdit").value.trim();
+            let charStr = document.getElementById("charStrEdit").value.trim();
+            let charDex = document.getElementById("charDexEdit").value.trim(); 
+            let charCon = document.getElementById("charConEdit").value.trim();
+            let charInt = document.getElementById("charIntEdit").value.trim();
+            let charWis = document.getElementById("charWisEdit").value.trim();
+            let charCha = document.getElementById("charChaEdit").value.trim();
+            let charBack = document.getElementById("charBackEdit").value.trim();
+            let charNote = document.getElementById("charNoteEdit").value.trim();
+            let charIDEdit = document.getElementById("charIDEdit").value.trim();
+
+            if(charIDEdit.length == 0)
+            {
+                alert("Please specify a Character ID to edit in DB")
+            }
+            else
+            {
+                let char = await loadCharacter(charIDEdit)
+                if (char.success)
+                {
+                    if(charName.length != 0)
+                    {
+                        char.data.name = charName;
+                    }
+                    if(charClass.length != 0)
+                    {
+                        char.data.class = charClass 
+                    }
+                    if(charStr.length != 0)
+                    {
+                        char.data.stats.str = charStr 
+                    }
+                    if(charDex.length != 0)
+                    {
+                        char.data.stats.dex = charDex 
+                    }
+                    if(charCon.length != 0)
+                    {
+                        char.data.stats.con = charCon 
+                    }
+                    if(charInt.length != 0)
+                    {
+                        char.data.stats.int = charInt 
+                    }
+                    if(charWis.length != 0)
+                    {
+                        char.data.stats.wis = charWis 
+                    }
+                    if(charCha.length != 0)
+                    {
+                        char.data.stats.cha = charCha 
+                    }
+                    if(charBack.length != 0)
+                    {
+                        char.data.background =  charBack.split(" ");
+                    }
+                    if(charNote.length != 0)
+                    {
+                        char.data.notes = charNote.split(" ");
+                    }
+                    //add logic to update image
+                    
+                    //console.log(char)
+                    let result = await updateCharacter(char);
+                    alert(result.message);
+                }
+                else
+                {
+                    alert(`[HTTP] Error loading character ${charIDEdit} from database`);
+                    console.log(char);
+                }
+            }
+        }
+        
+    </script>
+
+</head>
+
+<body class="bg-dark text-light container justify-content-center">
+  
+    <!-- User Display-->
+    <div class="row m-5">
+        <h1 class="text-center">User Testing:</h1>
+        <div>
+            <h3>Create User:</h3>
+            <input id="username" type="text" placeholder="Please enter username..." class="form-control">
+            <input id="password" type="text" placeholder="Please enter a password..." class="form-control">
+            <button class="btn btn-secondary w-100" onclick="signup()"> Test Character Creation </button>
+        </div>
+        <div>
+            <h3>Load User:</h3>
+            <input id="usernameLoad" type="text" placeholder="Please enter username..." class="form-control">
+            <input id="passwordLoad" type="text" placeholder="Please enter a password..." class="form-control">
+            <button class="btn btn-secondary w-100" onclick="getUser()"> Load User </button>
+        </div>
+        
+    </div>
+
+    <!-- Character Display-->
+    <div class="row m-5">
+        <h1 class="text-center">Character Testing:</h1>
+        <div>
+            <h3>Create Character:</h3>
+            <input id="charName" type="text" placeholder="Please enter a character name..." class="form-control">
+            <input id="charClass" type="text" placeholder="Please enter a class..." class="form-control">
+            <input id="charStr" type="text" placeholder="Str" class="form-control">
+            <input id="charDex" type="text" placeholder="Dex" class="form-control">
+            <input id="charCon" type="text" placeholder="Con" class="form-control">
+            <input id="charInt" type="text" placeholder="Int" class="form-control">
+            <input id="charWis" type="text" placeholder="Wis" class="form-control">
+            <input id="charCha" type="text" placeholder="Cha" class="form-control">
+            <input id="charBack" type="text" placeholder="Some background info..." class="form-control">
+            <input id="charNote" type="text" placeholder="Some notes about this character..." class="form-control">
+            <button class="btn btn-secondary w-100" onclick="makeCharacter()"> Test Character Creation </button>
+        </div>
+        <div>
+            <h3>Load Character:</h3>
+            <input id="charID" type="text" placeholder="Please enter an ID to fetch..." class="form-control">
+            <button class="btn btn-secondary w-100" onclick="getCharacter()"> Load Character </button>
+        </div>
+        <div>
+            <h3>Edit Character:</h3>
+            <input id="charIDEdit" type="text" placeholder="Please enter an ID to fetch..." class="form-control">
+            <input id="charNameEdit" type="text" placeholder="Enter text to edit the character name..." class="form-control">
+            <input id="charClassEdit" type="text" placeholder="Enter text to edit the class..." class="form-control">
+            <input id="charStrEdit" type="text" placeholder="Edit Str" class="form-control">
+            <input id="charDexEdit" type="text" placeholder="Edit Dex" class="form-control">
+            <input id="charConEdit" type="text" placeholder="Edit Con" class="form-control">
+            <input id="charIntEdit" type="text" placeholder="Edit Int" class="form-control">
+            <input id="charWisEdit" type="text" placeholder="Edit Wis" class="form-control">
+            <input id="charChaEdit" type="text" placeholder="Edit Cha" class="form-control">
+            <input id="charBackEdit" type="text" placeholder="Enter text to update background" class="form-control">
+            <input id="charNoteEdit" type="text" placeholder="Enter text to update character notes" class="form-control">
+            <button class="btn btn-secondary w-100" onclick="editChar()"> Test Character editor </button>
+        </div>
+        
+    </div>
+    <!-- Story Display-->
+    <div class="row m-5">
+        <h1 class="text-center">Story Testing:</h1>
+        <div>
+            <h3>Create Story:</h3>
+            <input id="storyTitle" type="text" placeholder="Please enter a title for a story..." class="form-control">
+            <input id="storyObj" type="text" placeholder="Create some objects..." class="form-control">
+            <input id="storyNote" type="text" placeholder="Enter some notes" class="form-control">
+            <button class="btn btn-secondary w-100" onclick="makeStory()"> Test Story Creation </button>
+        </div>
+        <div>
+            <h3>Load Story:</h3>
+            <input id="storyID" type="text" placeholder="Please enter an ID to fetch..." class="form-control">
+            <button class="btn btn-secondary w-100" onclick="getStory()"> Load Story </button>
+        </div>
+        <div>
+            <h3>Edit Story:</h3>
+            <input id="storyIDEdit" type="text" placeholder="Please enter an ID to fetch..." class="form-control">
+            <input id="storyTitleEdit" type="text" placeholder="Enter text to change title..." class="form-control">
+            <input id="storyObjEdit" type="text" placeholder="Enter text to update objects..." class="form-control">
+            <input id="storyNoteEdit" type="text" placeholder="Enter text to update story notes..." class="form-control">
+            <button class="btn btn-secondary w-100" onclick="editStory()"> Test Story editor </button>
+        </div>
+    </div>
+
+
+
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="scripts/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="scripts/http.js"></script>
+</body>
